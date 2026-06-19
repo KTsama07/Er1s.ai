@@ -124,17 +124,13 @@ npx prisma migrate dev
 ```
 
 ### 4. Run the Application
-The application is split into two processes for production, but locally you can run the web server and worker in separate terminal windows:
+The application is split into two processes for production, but locally you can run both the web server and worker simultaneously using a single command:
 
-**Terminal 1 (Web Server):**
 ```bash
-npm start
+npm run dev
 ```
 
-**Terminal 2 (Background Worker):**
-```bash
-npm run worker
-```
+*(Alternatively, you can run `npm start` and `npm run worker` in separate terminal windows.)*
 
 Once running, navigate to `http://localhost:3000` in your browser to access the AEO Dashboard.
 

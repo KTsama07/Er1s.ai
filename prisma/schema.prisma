@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Brand {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  competitors Competitor[]
+  queries     Query[]
+  scans       Scan[]
+  mentions    Mention[]    // Direct relationship for quick lookups
+}
+
+model Competitor {
+  id        String   @id @default(uuid())
+  name      String
+  brandId   String
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  mentions  Mention[]
+
+  @@unique([name, brandId]) // A brand shouldn't have duplicate competitors
+  @@index([brandId])
+}
+
+model Query {
+  id        String   @id @default(uuid())
+  text      String
+  brandId   String
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  isActive  Boolean  @default(true)
+  queryIntent QueryIntent?
+  batchId   String?  // Groups queries generated in the same AI run
+  createdAt DateTime @default(now())
+
+  aiResponses AiResponse[]
+
+  @@index([brandId])
+  @@index([batchId])
+}
+
+model Scan {
+  id              String   @id @default(uuid())
+  brandId         String
+  brand           Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  status          ScanStatus @default(PENDING)
+  visibilityScore Float?   // Populated after scan completion
+  failureReason   String?  // Populated when status=FAILED
+  createdAt       DateTime @default(now())
+
+  aiResponses AiResponse[]
+
+  @@index([brandId])
+  @@index([createdAt])     // For time-series querying of scores
+}
+
+model AiResponse {
+  id        String   @id @default(uuid())
+  scanId    String
+  scan      Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  queryId   String
+  query     Query    @relation(fields: [queryId], references: [id], onDelete: Cascade)
+  aiModel   String   // e.g., 'gpt-4o', 'claude-3-opus'
+  content   String   @db.Text
+  responseStructure ResponseStructure?
+  queryScore Float?
+  createdAt DateTime @default(now())
+
+  mentions Mention[]
+
+  @@index([scanId])
+  @@index([queryId])
+}
+
+model Mention {
+  id           String      @id @default(uuid())
+  aiResponseId String
+  aiResponse   AiResponse  @relation(fields: [aiResponseId], references: [id], onDelete: Cascade)
+  
+  // A mention relates to EITHER the primary Brand OR a Competitor
+  brandId      String?
+  brand        Brand?      @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  
+  competitorId String?
+  competitor   Competitor? @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  // Useful metadata for scoring
+  rankPosition   Int?        // e.g., Recommended as #1 vs #5
+  sentiment      Sentiment?
+  mentionContext String?     @db.Text
+  mentionType    MentionType?
+  characterIndex Int?
+  isInList       Boolean?
+
+  createdAt    DateTime    @default(now())
+
+  @@index([aiResponseId])
+  @@index([brandId])
+  @@index([competitorId])
+}
+
+enum ScanStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum Sentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+enum ResponseStructure {
+  PARAGRAPH
+  LIST
+  TABLE
+  MIXED
+}
+
+enum MentionType {
+  DIRECT_RECOMMENDATION
+  CASUAL_MENTION
+  COMPARISON
+  WARNING
+  SOLE_RECOMMENDATION
+  FEATURED_SNIPPET
+}
+
+enum QueryIntent {
+  INFORMATIONAL
+  NAVIGATIONAL
+  COMMERCIAL
+  TRANSACTIONAL
+}
+
+model ConversionEvent {
+  id            String   @id @default(uuid())
+  brandId       String
+  scanId        String?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  sessionId     String?
+  eventType     String
+  pipelineValue Float?
+  occurredAt    DateTime @default(now())
+
+  @@index([brandId])
+  @@index([scanId])
+}

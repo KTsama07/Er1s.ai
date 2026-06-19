@@ -51,12 +51,13 @@ graph TD
     %% DATA FLOW
     Web -->|Route /queries/generate| QuerySvc
     QuerySvc -->|Generate 50 intents| AiSvc
-    AiSvc <-->|Prompt| Gemini
+    AiSvc -->|Prompt| Gemini
     QuerySvc -->|Persist| DB
 
     ScanSvc -->|Fetch active queries| DB
-    ScanSvc -->|Batch (10 queries/call)| AiSvc
-    AiSvc <-->|Fetch raw AI responses| Gemini
+    ScanSvc -->|Batch 10 queries per call| AiSvc
+    AiSvc -->|Fetch raw AI responses| Gemini
+    Gemini -->|Return responses| AiSvc
     
     AiSvc -->|Raw text responses| DetectSvc
     DetectSvc -->|Analyze structure & entities| Gemini

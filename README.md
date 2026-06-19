@@ -23,54 +23,62 @@ The following diagram illustrates the **Workflow, Data Flow, and Control Flow** 
 ```mermaid
 graph TD
     %% Core Entities
-    Client[Browser / Dashboard]
-    Web[Express.js Web Server]
-    Worker[Background Queue Worker]
-    
+    Client([🌐 Browser / Dashboard]):::clientStyle
+    Web([⚡ Express.js Web Server]):::serverStyle
+
+    %% Queue
+    Redis[(🗄 Redis Queue)]:::queueStyle
+    Worker([⚙️ Background Worker]):::queueStyle
+
     %% Services
-    ScanSvc[Scan Orchestration Service]
-    QuerySvc[Query Generation Service]
-    AiSvc[AI Integration Service]
-    DetectSvc[Mention Detection Service]
-    ScoreSvc[Scoring Algorithm Service]
+    QuerySvc([📝 Query Generation Service]):::serviceStyle
+    ScanSvc([🔍 Scan Orchestration Service]):::serviceStyle
+    AiSvc([🤖 AI Integration Service]):::aiStyle
+    DetectSvc([🔎 Mention Detection Service]):::aiStyle
+    ScoreSvc([📊 Scoring Algorithm Service]):::aiStyle
 
     %% Data Stores
-    DB[(PostgreSQL Database)]
-    Redis[(Redis Queue)]
-    Gemini[Google Gemini API]
+    DB[(🗃 PostgreSQL Database)]:::dbStyle
+    Gemini([✨ Google Gemini API]):::geminiStyle
 
-    %% WORKFLOW & CONTROL FLOW
-    Client -->|1. Setup Brand| Web
-    Client -->|2. Generate Queries| Web
-    Client -->|3. Run Full Scan| Web
-    
-    Web -->|Queue background job| Redis
-    Redis -.->|Consume Job| Worker
+    %% --- CONTROL FLOW green ---
+    Client -->|1 Setup Brand| Web
+    Client -->|2 Generate Queries| Web
+    Client -->|3 Run Full Scan| Web
+    Web -->|Queue Job| Redis
+    Redis -->|Consume Job| Worker
     Worker -->|Execute| ScanSvc
 
-    %% DATA FLOW
-    Web -->|Route /queries/generate| QuerySvc
-    QuerySvc -->|Generate 50 intents| AiSvc
+    %% --- DATA FLOW blue ---
+    Web -->|Route to Query Service| QuerySvc
+    QuerySvc -->|50 Queries Generated| AiSvc
     AiSvc -->|Prompt| Gemini
-    QuerySvc -->|Persist| DB
-
-    ScanSvc -->|Fetch active queries| DB
-    ScanSvc -->|Batch 10 queries per call| AiSvc
-    AiSvc -->|Fetch raw AI responses| Gemini
-    Gemini -->|Return responses| AiSvc
-    
-    AiSvc -->|Raw text responses| DetectSvc
-    DetectSvc -->|Analyze structure & entities| Gemini
-    DetectSvc -->|Extract Mentions| ScoreSvc
-    
-    ScoreSvc -->|Calculate Visibility 0-100| ScanSvc
-    
-    %% Persistence
-    ScanSvc -->|Save Scans, Mentions, Scores| DB
-    
-    Client -->|4. View Analytics| Web
+    Gemini -->|Raw AI Responses| AiSvc
+    AiSvc -->|Batch Responses| DetectSvc
+    DetectSvc -->|Classify Mentions| Gemini
+    DetectSvc -->|Extracted Mentions| ScoreSvc
+    ScoreSvc -->|Visibility Score 0-100| ScanSvc
+    ScanSvc -->|Fetch Queries| DB
+    ScanSvc -->|Save Results| DB
+    QuerySvc -->|Persist Queries| DB
+    Client -->|4 View Analytics| Web
     Web -->|Fetch Time-Series Data| DB
+
+    %% --- STYLES ---
+    classDef clientStyle  fill:#DBEAFE,stroke:#3B82F6,color:#1E3A5F,font-weight:bold
+    classDef serverStyle  fill:#FEF3C7,stroke:#F59E0B,color:#78350F,font-weight:bold
+    classDef queueStyle   fill:#EDE9FE,stroke:#7C3AED,color:#3B0764,font-weight:bold
+    classDef serviceStyle fill:#DCFCE7,stroke:#16A34A,color:#14532D,font-weight:bold
+    classDef aiStyle      fill:#FEF9C3,stroke:#CA8A04,color:#713F12,font-weight:bold
+    classDef dbStyle      fill:#FFE4E6,stroke:#E11D48,color:#881337,font-weight:bold
+    classDef geminiStyle  fill:#CCFBF1,stroke:#0D9488,color:#134E4A,font-weight:bold
+
+    linkStyle 0,1,2,3,4,5 stroke:#16A34A,stroke-width:2px
+    linkStyle 6,7,8,9,10,11,12,13,14,15,16,17,18 stroke:#2563EB,stroke-width:2px
 ```
+
+> 🟢 **Green arrows** = Control Flow (commands and triggers)  
+> 🔵 **Blue arrows** = Data Flow (data moving between services)
 
 ### Core Pipelines
 1. **Query Generation:** The system uses a multi-phase AI prompt to research the brand's industry and generate 50 high-intent SEO queries *without* explicitly mentioning the brand name.

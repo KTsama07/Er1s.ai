@@ -51,7 +51,7 @@ graph TD
 
     %% --- DATA FLOW blue ---
     Web -->|Route to Query Service| QuerySvc
-    QuerySvc -->|50 Queries Generated| AiSvc
+    QuerySvc -->|20 Queries Generated| AiSvc
     AiSvc -->|Prompt| Gemini
     Gemini -->|Raw AI Responses| AiSvc
     AiSvc -->|Batch Responses| DetectSvc
@@ -81,9 +81,9 @@ graph TD
 > 🔵 **Blue arrows** = Data Flow (data moving between services)
 
 ### Core Pipelines
-1. **Query Generation:** The system uses a multi-phase AI prompt to research the brand's industry and generate 50 high-intent SEO queries *without* explicitly mentioning the brand name.
-2. **Scan Orchestration:** The background worker pulls the 50 queries, chunks them into batches of 10, and runs them through the Gemini 2.5-flash model. 
-3. **Detection & Scoring:** The raw AI responses are parsed to detect competitor and brand mentions. A secondary model (Gemini 2.0-flash) classifies the sentiment and mention type (e.g., Direct Recommendation vs. Comparison). A final score from 0-100 is calculated based on rank position and context.
+1. **Query Generation:** The system uses a multi-phase AI prompt to research the brand's industry and generate 20 high-intent SEO queries *without* explicitly mentioning the brand name.
+2. **Scan Orchestration:** The background worker pulls the 20 queries, chunks them into batches of 10, and runs them through the gemini-3.1-flash-lite model. 
+3. **Detection & Scoring:** The raw AI responses are parsed to detect competitor and brand mentions. A secondary model (gemini-3.1-flash-lite) classifies the sentiment and mention type (e.g., Direct Recommendation vs. Comparison). A final score from 0-100 is calculated based on rank position and context.
 
 ---
 
@@ -146,17 +146,17 @@ This project includes a `Dockerfile` optimized for serverless container environm
 
 1. **Build the container:**
    ```bash
-   docker build -t ai-visibility-tracker .
+   docker build -t er1s-ai .
    ```
 
 2. **Run as Web Server:**
    ```bash
-   docker run -p 3000:3000 --env-file .env ai-visibility-tracker npm start
+   docker run -p 3000:3000 --env-file .env er1s-ai npm start
    ```
 
 3. **Run as Background Worker:**
    ```bash
-   docker run --env-file .env ai-visibility-tracker npm run worker
+   docker run --env-file .env er1s-ai npm run worker
    ```
 
 *Note: When deploying to Cloud Run, ensure you provision a Serverless VPC Access connector to allow the container to communicate with your managed Cloud SQL and Memorystore (Redis) instances.*

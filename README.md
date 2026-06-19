@@ -1,6 +1,6 @@
-# AI Visibility Tracker
+# ER1S.AI
 
-The **AI Visibility Tracker** (Agent 0) is an **AI Engine Optimisation (AEO)** MVP. It is a backend and web application that automates the process of querying AI models (like Google Gemini) to determine how visible a specific brand is compared to its competitors across high-intent, industry-specific prompts.
+The **ER1S.AI** is an **AI Engine Optimisation (AEO)** MVP. It is a backend and web application that automates the process of querying AI models (like Google Gemini) to determine how visible a specific brand is compared to its competitors across high-intent, industry-specific prompts.
 
 ---
 
